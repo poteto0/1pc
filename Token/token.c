@@ -13,9 +13,10 @@ typedef enum {
 // トークン型
 struct Token {
   TokenKind kind; // トークンの型
-  Token *next;    // 次の入力トークン
-  int val;        // kindがTK_NUMの場合、その数値
-  char *str;      // トークン文字列
+  Token*    next; // 次の入力トークン
+  int       val;  // kindがTK_NUMの場合、その数値
+  char*     str;  // トークン文字列
+  int       len;  // 文字列の長さ → ==などの2文字を扱えるようにする
 };
 
 #endif

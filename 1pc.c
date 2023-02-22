@@ -17,8 +17,11 @@ Token *token;
 
 // 次のトークンが期待している記号のときには、トークンを1つ読み進めて
 // 真を返す。それ以外の場合には偽を返す。
-bool consume(char op) {
-  if (token->kind != TK_RESERVED || token->str[0] != op)
+bool consume(char* op) {
+  if(token->kind != TK_RESERVED || 
+     strlen(op) != token->len || // 文字数チェック
+     memcmp(token->str, op, token->len) // 先頭から文字数分チェックする(==0 でtrue)
+    )
     return false;
   token = token->next;
   return true;
@@ -26,8 +29,11 @@ bool consume(char op) {
 
 // 次のトークンが期待している記号のときには、トークンを1つ読み進める。
 // それ以外の場合にはエラーを報告する。
-void expect(char op) {
-  if (token->kind != TK_RESERVED || token->str[0] != op)
+void expect(char* op) {
+  if(token->kind != TK_RESERVED || 
+     strlen(op) != token->len || // 文字数チェック
+     memcmp(token->str, op, token->len) // 先頭から文字数分チェックする(==0 でtrue)
+    )
     error_at(user_input, token->str, "'%c'ではありません", op);
   token = token->next;
 }
@@ -50,12 +56,18 @@ int expect_number() {
 }
 
 // 新しいトークンを作成してcurに繋げる
-Token *new_token(TokenKind kind, Token *cur, char *str) {
+Token *new_token(TokenKind kind, Token *cur, char *str, int len) {
   Token *tok = calloc(1, sizeof(Token)); // メモリの確保
   tok->kind = kind;
-  tok->str = str;
+  tok->str  = str;
+  tok->len  = len;
   cur->next = tok;
   return tok;
+}
+
+// 複数文字トークンの比較 → 2文字分比較したいからここで定義
+bool startswith(char *p, char *q) {
+  return memcmp(p, q, strlen(q)) == 0;
 }
 
 // 入力文字列pをトークナイズしてそれを返す
@@ -66,23 +78,34 @@ Token *tokenize(char *p) {
   head.next = NULL;
   Token *cur = &head;
 
-  while (*p) {
+  while(*p){
     // 空白文字をスキップ
-    if (isspace(*p)) {
+    if(isspace(*p)){
       p++;
       continue;
     }
 
-    // 記号トークン
-    if (strchr("+-*/()", *p)) {
-      cur = new_token(TK_RESERVED, cur, p++);
+    // 複数記号トークン
+    if(startswith(p, "==") || startswith(p, "!=") ||
+       startswith(p, "<=") || startswith(p, ">=")){
+      cur = new_token(TK_RESERVED, cur, p, 2);
+      p += 2; // 2文字送る
+      continue;
+    }
+
+    // 単数記号トークン
+    if(strchr("+-*/()<>", *p)){
+      cur = new_token(TK_RESERVED, cur, p++, 1);
       continue;
     }
 
     // 文字が数字の場合にはvalにその数字をセットする
     if (isdigit(*p)) {
-      cur = new_token(TK_NUM, cur, p);
+      cur = new_token(TK_NUM, cur, p, 0);
+      // 数字によって桁数が違うため、1回0で初期化してから計算する
+      char *q = p;
       cur->val = strtol(p, &p, 10);
+      cur->len = p - q;
       continue;
     }
 
@@ -90,7 +113,7 @@ Token *tokenize(char *p) {
   }
 
   // 全部終わったら終了文字としてTokenに記録
-  new_token(TK_EOF, cur, p);
+  new_token(TK_EOF, cur, p, 0);
   return head.next; // これはつまりcurを返してる?
 }
 
@@ -110,43 +133,93 @@ Node *new_node_num(int val) {
 }
 
 Node *expr();
+Node *equality();
+Node *relational();
+Node *add();
 Node *mul();
 Node *primary();
+Node *unary();
 
-// 式を表す mull("+" mul | "-" mul)*
-Node *expr() {
+// expr = equality
+Node *expr(){
+  return equality();
+}
+
+// equality = relational ("==" relational | "!=" relational)*
+Node *equality() {
+  Node *node = relational();
+
+  for(;;){
+    if(consume("=="))
+      node = new_node(ND_EQ, node, relational());
+    else if(consume("!="))
+      node = new_node(ND_NE, node, relational());
+    else
+      return node;
+  }
+}
+
+// relational = add ("<" add | "<=" add | ">" add | ">=" add)*
+Node *relational(){
+  Node *node = add();
+
+  for(;;){
+    if(consume("<"))
+      node = new_node(ND_LT, node, add());
+    else if(consume("<="))
+      node = new_node(ND_LE, node, add());
+    else if(consume(">")) // < の右辺と左辺を逆転
+      node = new_node(ND_LT, add(), node);
+    else if(consume(">=")) // <= の右辺と左辺を逆転
+      node = new_node(ND_LE, add(), node);
+    else
+      return node;
+  }
+}
+
+// add = mul ("+" mul | "-" mul)*
+Node *add(){
   Node *node = mul();
 
-  for (;;) {
-    if (consume('+'))
+  for(;;){
+    if(consume("+"))
       node = new_node(ND_ADD, node, mul());
-    else if (consume('-'))
+    else if(consume("-"))
       node = new_node(ND_SUB, node, mul());
     else
       return node;
   }
 }
 
-// primary ("*" primary | "/" primary)*
+// mull = primary ("*" primary | "/" primary)*
 Node *mul() {
-  Node *node = primary();
+  Node *node = unary();
 
   for (;;) {
-    if (consume('*'))
-      node = new_node(ND_MUL, node, primary());
-    else if (consume('/'))
-      node = new_node(ND_DIV, node, primary());
+    if (consume("*"))
+      node = new_node(ND_MUL, node, unary());
+    else if (consume("/"))
+      node = new_node(ND_DIV, node, unary());
     else
       return node;
   }
 }
 
-// num | "(" expr ")"
+// unary = ("+" | "-")? unary | primary
+Node *unary() {
+  if (consume("+"))
+    return unary();
+  if (consume("-"))
+    return new_node(ND_SUB, new_node_num(0), unary());
+  return primary();
+}
+
+// primary = num | "(" expr ")"
 Node *primary() {
   // 次のトークンが"("なら、"(" expr ")"のはず
-  if (consume('(')) {
+  if (consume("(")) {
     Node *node = expr();
-    expect(')');
+    expect(")");
     return node;
   }
 
@@ -174,16 +247,32 @@ void gen(Node *node) {
   // 四則演算
   switch (node->kind) {
     case ND_ADD:
-      printf(" add x0, x1, x0\n");
+      printf(" add  x0, x1, x0\n");
       break;
     case ND_SUB:
-      printf(" sub x0, x1, x0\n");
+      printf(" sub  x0, x1, x0\n");
       break;
     case ND_MUL:
-      printf(" mul x0, x1, x0\n");
+      printf(" mul  x0, x1, x0\n");
       break;
     case ND_DIV:
       printf(" sdiv x0, x1, x0\n");
+      break;
+    case ND_EQ:
+      printf(" cmp  x1, x0\n");
+      printf(" cset x0, eq\n");
+      break;
+    case ND_NE:
+      printf(" cmp  x1, x0\n");
+      printf(" cset x0, ne\n");
+      break;
+    case ND_LT:
+      printf(" cmp  x1, x0\n");
+      printf(" cset x0, lt\n");
+      break;
+    case ND_LE:
+      printf(" cmp  x1, x0\n");
+      printf(" cset x0, le\n");
       break;
   }
 
@@ -212,7 +301,7 @@ int main(int argc, char **argv) {
 
   // 式の最初は数でなければならないので、それをチェックして
   // 最初のmov命令を出力
-  printf("  mov x0, %d\n", expect_number());
+  printf(" mov x0, %d\n", expect_number());
 
   /*
   // `+ <数>`あるいは`- <数>`というトークンの並びを消費しつつ

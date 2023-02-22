@@ -34,5 +34,14 @@ str x0, [sp, -16]!
 ```
 注意) x0とw0にアクセスしようとするとエラー
 
+## 比較
+```
+cmp x0, x1  // compare
+cset x0, eq // ==
+cset x0, ne // !=
+cset x0, lt // <
+cset x0, le // <=
+```
+
 arm64
 https://zenn.dev/kagamoc/scraps/8d4ab7157e0529

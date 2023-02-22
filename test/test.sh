@@ -21,5 +21,14 @@ assert 41 " 12 + 34 - 5 "
 assert 47 '5+6*7'
 assert 15 '5*(9-6)'
 assert 4 '(3+5)/2'
+# 単項演算
+assert 1 '-11 + 2*6'
+# 比較演算
+assert 1 '11 == 11'
+assert 0 '11 != 11'
+assert 1 '11 < 22'
+assert 1 '11 <= 22'
+assert 0 '11 > 22'
+assert 0 '11 >= 22'
 
 echo OK
