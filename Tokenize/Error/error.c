@@ -12,7 +12,7 @@ void error_at(char* user_input, char *loc, char *fmt, ...) {
   fprintf (stderr, "^ ");
   vfprintf(stderr, fmt, ap);
   fprintf (stderr, "\n");
-  //exit(1);
+  exit(1);
 }
 
 // エラーを報告するための関数
