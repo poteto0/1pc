@@ -128,7 +128,7 @@ Node *primary() {
   if(tok){
     Node *node = calloc(1, sizeof(Node));
     node->kind = ND_LVAR;
-    node->offset = (tok->str[0] - 'a' + 1) * 8; // aから何文字離れてるか * 8
+    node->offset = (tok->str[0] - 'a' + 1) * 16; // aから何文字離れてるか * 8
     return node;
   }
 

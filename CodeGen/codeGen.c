@@ -6,16 +6,15 @@ void gen_lval(Node *node) {
   if (node->kind != ND_LVAR)
     error("代入の左辺値が変数ではありません");
 
-  printf(" mov x0, base\n");
-  printf(" sub x0, %d\n", node->offset);
-  printf(" str x0, [sp, -16]!\n");
+  printf(" ldr x0, [sp]\n");
+  printf(" str x0, [sp, -%d]!\n", node->offset);
 }
 
 void load() {
-  printf(" ldr x0, [sp], 16\n");
   // 変数: x0をアドレスとみなして値をロードしてx0に保存する
-  printf(" mov x0, [x0]\n");
-  printf(" str x0, [sp, -16]! \n"); // 16バイトずつ
+  printf(" ldr x0, [sp], 16\n");
+  printf(" ldr x0, [sp] \n"); // 16バイトずつ
+  printf(" str x0, [sp, -16]!\n");
 }
 
 void store() {
@@ -23,7 +22,7 @@ void store() {
   printf(" ldr x0, [sp], 16\n");
   // 変数への代入
   // x0をアドレスとみなしてx1の値をストアする
-  printf(" mov [x0], x1\n");
+  printf(" str x1, [sp]\n");
   printf(" str x1, [sp, -16]!\n");
 }
 
@@ -36,8 +35,8 @@ void gen(Node *node) {
       printf(" str x0, [sp, -16]! \n"); // 16バイトずつ
       return;
     case ND_LVAR:
-      //gen_lval(node);
-      //load();
+      gen_lval(node);
+      load();
       return;
     case ND_ASSIGN:
       gen_lval(node->lhs);
@@ -51,7 +50,7 @@ void gen(Node *node) {
   gen(node->rhs);
 
   // 左辺と右辺をポップする
-  printf(" ldr x1, [sp], 16\n");
+  printf(" ldr x1, [sp], 16\n"); // 読み込んでから16ビット送る
   printf(" ldr x0, [sp], 16\n");
 
   // 四則演算
@@ -95,12 +94,6 @@ void code_gen(){
   printf(".globl main\n");
   printf("main:\n");
 
-  // プロローグ
-  // 変数26個分の領域を確保する
-  //printf(" str base, [sp, -16]!\n"); // ベースレジスタをpush
-  //printf(" mov base, x0\n"); // baseをx0までずらす
-  //printf(" sub x0, 208\n"); // 26*8領域を確保
-
   // 1行づつコードを生成する
   for(int i=0; code[i]; i++){
     // 抽象構文木を下りながらコード生成
@@ -110,11 +103,6 @@ void code_gen(){
     // はずなので、スタックが溢れないようにポップしておく
     printf(" ldr x0, [sp], 16\n");
   }
-
-  // エピローグ
-  // 最後の式の結果がx0に残っているため、それを返り値とする
-  //printf(" mov x0, base\n");
-  //printf(" ldr base, [sp], 16\n");
-  printf(" str x0, [sp, -16]!\n");
+  
   printf(" ret\n");
 }

@@ -17,7 +17,7 @@ int main(int argc, char **argv) {
 
   // 文字列全体を取得
   user_input = argv[1];
-  // トークナイズするa
+  // トークナイズする
   token = tokenize(user_input);
   // プログラムを読み込む
   program();

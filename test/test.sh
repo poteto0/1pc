@@ -31,7 +31,7 @@ assert 1 '11 <= 22;'
 assert 0 '11 > 22;'
 assert 0 '11 >= 22;'
 # 変数(1文字)
-assert 5 ' b =  1;'
+assert 1 ' b =  1;'
 #assert 3 'a=1; b=2; a+b;'
 
 echo OK
