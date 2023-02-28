@@ -1,3 +1,6 @@
+#ifndef __TOKENIZE
+#define __TOKENIZE
+
 #include "Token/token.h"
 #include "Error/error.c"
 
@@ -19,7 +22,15 @@ bool at_eof();
 // 新しいトークンを作成してcurに繋げる
 Token *new_token(TokenKind kind, Token *cur, char *str, int len);
 
+// 複数文字トークンの比較
 bool startswith(char *p, char *q);
+
+// アルファベット | _
+bool is_alpha(char c);
+// 数字 | アルファベット | _
+bool is_alnum(char c);
 
 // 入力文字列pをトークナイズしてそれを返す
 Token *tokenize(char *p);
+
+#endif

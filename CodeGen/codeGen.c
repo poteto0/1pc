@@ -8,6 +8,10 @@ void gen_lval(Node *node) {
 
   printf(" ldr x0, [sp]\n");
   printf(" str x0, [sp, -%d]!\n", node->offset);
+  //  return;
+  //}
+  //printf(" sub sp, sp, -%d\n", node->offset);
+  //printf(" str x0, [sp]\n");
 }
 
 void load() {
@@ -42,6 +46,11 @@ void gen(Node *node) {
       gen_lval(node->lhs);
       gen(node->rhs);
       store();
+      return;
+    case ND_RETURN: // returnが出てきたらそこで終了
+      gen(node->lhs); // 左辺をgenして返り値を求める
+      printf(" B .Lreturn\n");
+      printf(" ret\n"); // ret命令は何個あってもいい
       return;
   }
 
@@ -103,6 +112,7 @@ void code_gen(){
     // はずなので、スタックが溢れないようにポップしておく
     printf(" ldr x0, [sp], 16\n");
   }
-  
+  printf(".Lreturn:\n");
+  printf(" ldr x0, [sp]\n");
   printf(" ret\n");
 }

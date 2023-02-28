@@ -13,9 +13,9 @@ cset x0, le // <=
 ## push and pop
 ```s
 // push
-str x0, [sp, -16]! // sp-=16; x0 = *sp;
+str x0, [sp, -8]! // sp-=8; x0 = *sp;
 // pop
-ldr x0, [sp], 16 // *sp = x0; sp += 16;
+ldr x0, [sp], 8 // *sp = x0; sp += 8;
 ```
 
 ## store and load
