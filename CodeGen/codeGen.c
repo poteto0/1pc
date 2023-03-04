@@ -6,18 +6,15 @@ void gen_lval(Node *node) {
   if (node->kind != ND_LVAR)
     error("代入の左辺値が変数ではありません");
 
-  printf(" ldr x0, [sp]\n");
-  printf(" str x0, [sp, -%d]!\n", node->offset);
-  //  return;
-  //}
-  //printf(" sub sp, sp, -%d\n", node->offset);
-  //printf(" str x0, [sp]\n");
+  printf(" mov x0, x29\n");
+  printf(" sub x0, x0, %d\n", node->offset);
+  printf(" str x0, [sp, -16]!\n");
 }
 
 void load() {
   // 変数: x0をアドレスとみなして値をロードしてx0に保存する
   printf(" ldr x0, [sp], 16\n");
-  printf(" ldr x0, [sp] \n"); // 16バイトずつ
+  printf(" ldr x0, [x0]\n");
   printf(" str x0, [sp, -16]!\n");
 }
 
@@ -26,7 +23,7 @@ void store() {
   printf(" ldr x0, [sp], 16\n");
   // 変数への代入
   // x0をアドレスとみなしてx1の値をストアする
-  printf(" str x1, [sp]\n");
+  printf(" str x1, [x0]\n");
   printf(" str x1, [sp, -16]!\n");
 }
 
@@ -102,6 +99,10 @@ void code_gen(){
   // アセンブリの前半部分を出力
   printf(".globl main\n");
   printf("main:\n");
+
+  // Prologue
+  printf(" mov x29, sp\n");
+  printf(" sub sp, sp, 416\n");
 
   // 1行づつコードを生成する
   for(int i=0; code[i]; i++){
