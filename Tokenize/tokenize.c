@@ -111,20 +111,12 @@ Token *tokenize(char *p) {
     }
 
     // 変数
-    /*
     if (is_alpha(*p)) {
       // 変数の場合には変数が終わるまで文字を送る
       char *q = p++;
       while (is_alnum(*p))
         p++;
       cur = new_token(TK_IDENT, cur, q, p - q);
-      continue;
-    }
-    */
-
-    // 1文字変数トークン
-    if('a' <= *p && *p <= 'z') {
-      cur = new_token(TK_IDENT, cur, p++, 1);
       continue;
     }
 

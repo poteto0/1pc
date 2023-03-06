@@ -157,14 +157,13 @@ Node *primary() {
     node->kind = ND_LVAR;
     node->offset = (tok->str[0] - 'a' + 1) * 8; // aから何文字離れてるか * 16
     return node;
-    /*
+    
     // 既存の変数でなければNULL
     LVar *lvar = find_lvar(tok);
 
     if(!lvar)
       lvar = push_lvar(tok); // 新しい変数を作ってlocalsにpush
     return new_lvar_node(lvar); // 既存の変数ならoffsetを受け継いで新たなノードとする
-    */
   }
 
   // そうでなければ数値ノード
