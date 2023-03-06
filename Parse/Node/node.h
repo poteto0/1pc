@@ -17,6 +17,8 @@ typedef enum {
   ND_NUM,    // 整数
   ND_ASSIGN, // = (代入演算)
   ND_RETURN, // "return"
+  // 制御構文
+  ND_IF,     // "if"
 } NodeKind;
 
 // 抽象構文木のノードの型
@@ -26,6 +28,11 @@ struct Node {
   Node     *rhs;   // 右辺
   int      val;    // kindがND_NUMの場合のみ使う
   int      offset; // kindがND_LVARの場合のみ使う -> ベースポインタからのオフセット
+
+  // "if" statement //
+  Node *cond;
+  Node *then;
+  Node *els;
 };
 
 #endif

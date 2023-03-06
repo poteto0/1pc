@@ -43,12 +43,25 @@ Node *program() {
   code[i] = NULL;
 }
 
-// stmt = expr ";" | "return" expr ";"
 // プログラム1行単位
+// stmt = "return" expr ";"
+//      | "if" "(" expr ")" stmt ("else" stmt)?
+//      | expr ";"
 Node *stmt(){
-  if(consume("return")) {
+  if(consume("return")){
     Node *node = new_unary_node(ND_RETURN, expr());
     expect(";");
+    return node;
+  }
+
+  if(consume("if")){
+    Node *node = new_node(ND_IF);
+    expect("(");
+    node->cond = expr();
+    expect(")");
+    node->then = stmt();
+    if(consume("else"))
+      node->els = stmt();
     return node;
   }
   
@@ -157,14 +170,13 @@ Node *primary() {
     node->kind = ND_LVAR;
     node->offset = (tok->str[0] - 'a' + 1) * 16; // aから何文字離れてるか * 16
     return node;
-    /*
+
     // 既存の変数でなければNULL
     LVar *lvar = find_lvar(tok);
 
     if(!lvar)
       lvar = push_lvar(tok); // 新しい変数を作ってlocalsにpush
     return new_lvar_node(lvar); // 既存の変数ならoffsetを受け継いで新たなノードとする
-    */
   }
 
   // そうでなければ数値ノード

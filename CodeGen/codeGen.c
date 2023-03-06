@@ -1,5 +1,7 @@
 #include "codeGen.h"
 
+int labelseq = 0;
+
 // 左辺が変数の場合
 // それ以外は無効な式 EX: 1 = 2
 void gen_lval(Node *node) {
@@ -44,6 +46,30 @@ void gen(Node *node) {
       gen(node->rhs);
       store();
       return;
+    case ND_IF: {
+      // 関数名をラベリングする
+      // 呼び出しの度に違う名前になる
+      int seq = labelseq++;
+      if (node->els) {
+        gen(node->cond);
+        printf(" ldr x0, [sp], 16\n");
+        printf(" cmp x0, 0\n");
+        printf(" b.eq .Lelse%d\n", seq); // 等しい場合
+        gen(node->then);
+        printf(" b .Lend%d\n", seq);
+        printf(".Lelse%d:\n", seq);
+        gen(node->els);
+        printf(".Lend%d:\n", seq);
+      } else {
+        gen(node->cond);
+        printf(" ldr x0, [sp], 16\n");
+        printf(" cmp x0, 0\n");
+        printf(" b.eq .Lend%d\n", seq);
+        gen(node->then);
+        printf(".Lend%d:\n", seq);
+      }
+      return;
+    }
     case ND_RETURN: // returnが出てきたらそこで終了
       gen(node->lhs); // 左辺をgenして返り値を求める
       printf(" B .Lreturn\n");
