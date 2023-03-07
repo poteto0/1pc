@@ -46,6 +46,8 @@ Node *program() {
 // プログラム1行単位
 // stmt = "return" expr ";"
 //      | "if" "(" expr ")" stmt ("else" stmt)?
+// .    | "while" "(" expr ")" stmt
+//      | "for" "(" expr? ";" expr? ";" expr? ")" stmt
 //      | expr ";"
 Node *stmt(){
   if(consume("return")){
@@ -62,6 +64,36 @@ Node *stmt(){
     node->then = stmt();
     if(consume("else"))
       node->els = stmt();
+    return node;
+  }
+
+  if(consume("while")){
+    Node *node = new_node(ND_WHILE);
+    expect("(");
+    node->cond = expr();
+    expect(")");
+    node->then = stmt();
+    return node;
+  }
+
+  // for(init = expr?; cond = expr?; inc = expr?) stmt
+  if(consume("for")){
+    Node *node = new_node(ND_FOR);
+    expect("(");
+    // ;でないとしたらexprが存在する
+    if(!consume(";")){
+      node->init = new_unary_node(ND_EXPR_STMT, expr());
+      expect(";");
+    }
+    if(!consume(";")){
+      node->cond = expr();
+      expect(";");
+    }
+    if(!consume(")")){
+      node->inc = new_unary_node(ND_EXPR_STMT, expr());
+      expect(")");
+    }
+    node->then = stmt();
     return node;
   }
   
