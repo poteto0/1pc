@@ -22,7 +22,9 @@ typedef enum {
   ND_IF,        // "if"
   ND_WHILE,     // "while"
   ND_FOR,       // "for"
-  ND_BLOCK,     // {...} 
+  ND_BLOCK,     // {...}
+  // function
+  ND_FUNCALL,   // Function
 } NodeKind;
 
 // 抽象構文木のノードの型
@@ -42,6 +44,9 @@ struct Node {
 
   // {...} block
   Node *next;      // Next node => 連結リストにして構文をひとまとめに管理する
+
+  // function call
+  char *funcname;
 };
 
 #endif

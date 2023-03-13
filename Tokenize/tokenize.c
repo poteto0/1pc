@@ -12,6 +12,14 @@ bool consume(char* op){
   return true;
 }
 
+
+char *strndup(char *p, int len) {
+  char *buf = malloc(len + 1);
+  strncpy(buf, p, len);
+  buf[len] = '\0';
+  return buf;
+}
+
 // consumeの文字ver
 Token *consume_ident(){
   if (token->kind != TK_IDENT)
@@ -110,7 +118,7 @@ Token *tokenize(char *p) {
       continue;
     }
 
-    // 制御構文のキーワード | 複数記号トークンであレバ
+    // 制御構文のキーワード | 複数記号トークンであれば
     char *kw = starts_with_reserved(p);
     if(kw){
       int len = strlen(kw);

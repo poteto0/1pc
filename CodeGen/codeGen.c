@@ -108,8 +108,14 @@ void gen(Node *node) {
       for (Node *n = node->next; n; n = n->next)
         gen(n);
       return;
+    case ND_FUNCALL:
+      //printf(" bl %s\n", node->funcname);
+      printf(" bl %s\n", node->funcname);
+      printf(" str x0, [sp, -16]!\n");
+      return;
     case ND_RETURN: // returnが出てきたらそこで終了
       gen(node->lhs); // 左辺をgenして返り値を求める
+      printf(" ldr x0, [sp], 16\n");
       printf(" b .Lreturn\n"); // returnへジャンプ
       return;
   }
@@ -176,7 +182,10 @@ void code_gen(){
     // はずなので、スタックが溢れないようにポップしておく
     printf(" ldr x0, [sp], 16\n");
   }
+
+  // Epilogue
   printf(".Lreturn:\n");
-  printf(" ldr x0, [sp]\n");
+  printf(" mov sp, x29\n");
+  printf(" ldr x29, [sp], 16\n");
   printf(" ret\n");
 }

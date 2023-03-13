@@ -13,6 +13,8 @@ Token *token;
 bool consume(char* op);
 Token *consume_ident();
 
+char *strndup(char *p, int len);
+
 void expect(char* op);
 
 int expect_number();

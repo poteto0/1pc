@@ -204,7 +204,9 @@ Node *unary() {
   return primary();
 }
 
-// primary = num | "(" expr ")"
+// primary = num 
+//         | "(" expr ")"
+//         | ident ( "(" ")"" )? => function without args
 Node *primary() {
   // 次のトークンが"("なら、"(" expr ")"のはず
   if(consume("(")){
@@ -213,9 +215,17 @@ Node *primary() {
     return node;
   }
 
-  // 変数ノード
+  // variable or function
   Token *tok = consume_ident();
   if(tok){
+    // function
+    if(consume("(")){
+      expect(")");
+      Node *node = new_node(ND_FUNCALL);
+      node->funcname = strndup(tok->str, tok->len);
+      return node;
+    }
+    // variable
     Node *node = calloc(1, sizeof(Node));
     node->kind = ND_LVAR;
     node->offset = (tok->str[0] - 'a' + 1) * 16; // aから何文字離れてるか * 16
