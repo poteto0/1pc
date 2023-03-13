@@ -120,7 +120,7 @@ Token *tokenize(char *p) {
     }
 
     // 単数記号トークン
-    if(strchr("+-*/()<>=;", *p)){
+    if(strchr("+-*/()<>=;{}", *p)){
       cur = new_token(TK_RESERVED, cur, p++, 1);
       continue;
     }

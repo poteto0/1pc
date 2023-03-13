@@ -46,9 +46,10 @@ Node *program() {
 // プログラム1行単位
 // stmt = "return" expr ";"
 //      | "if" "(" expr ")" stmt ("else" stmt)?
-// .    | "while" "(" expr ")" stmt
+//      | "while" "(" expr ")" stmt
 //      | "for" "(" expr? ";" expr? ";" expr? ")" stmt
 //      | expr ";"
+//      | "{" stmt* "}"
 Node *stmt(){
   if(consume("return")){
     Node *node = new_unary_node(ND_RETURN, expr());
@@ -94,6 +95,23 @@ Node *stmt(){
       expect(")");
     }
     node->then = stmt();
+    return node;
+  }
+
+  // {...} block
+  if(consume("{")){
+    // 空のノードにつなげる
+    Node head;
+    head.next = NULL;
+    Node *cur = &head;
+
+    while (!consume("}")) {
+      cur->next = stmt();
+      cur = cur->next;
+    }
+
+    Node *node = new_node(ND_BLOCK);
+    node->next = head.next;
     return node;
   }
   

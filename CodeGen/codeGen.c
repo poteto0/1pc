@@ -102,6 +102,12 @@ void gen(Node *node) {
       printf(".Lend%d:\n", seq);
       return;
     }
+    // {...} block
+    case ND_BLOCK:
+      // 連結リスト内を全て実行する。
+      for (Node *n = node->next; n; n = n->next)
+        gen(n);
+      return;
     case ND_RETURN: // returnが出てきたらそこで終了
       gen(node->lhs); // 左辺をgenして返り値を求める
       printf(" b .Lreturn\n"); // returnへジャンプ
