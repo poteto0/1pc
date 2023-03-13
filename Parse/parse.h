@@ -8,7 +8,7 @@ Node *code[100];
 // ノードの作成
 Node *new_node(NodeKind kind);
 Node *new_binary_node(NodeKind kind, Node *lhs, Node *rhs);
-Node *new_unary_node(NodeKind kind, Node *expr);
+Node *new_unary_node(NodeKind kind, Node *expr); // 左辺のみ
 Node *new_num_node(int val);
 Node *new_lvar_node(LVar *lvar); // 新しい変数を作る
 

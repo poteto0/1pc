@@ -2,8 +2,8 @@
 
 // 次のトークンが期待している記号のときには、トークンを1つ読み進めて
 // 真を返す。それ以外の場合には偽を返す。
-bool consume(char* op) {
-  if((token->kind != TK_RESERVED && token->kind != TK_RETURN) ||
+bool consume(char* op){
+  if(token->kind != TK_RESERVED ||
      strlen(op) != token->len || // 文字数チェック
      memcmp(token->str, op, token->len) // 先頭から文字数分チェックする(==0 でtrue)
     )
@@ -13,7 +13,7 @@ bool consume(char* op) {
 }
 
 // consumeの文字ver
-Token *consume_ident() {
+Token *consume_ident(){
   if (token->kind != TK_IDENT)
     return NULL;
   Token *t = token;
@@ -64,6 +64,27 @@ bool startswith(char *p, char *q) {
   return memcmp(p, q, strlen(q)) == 0;
 }
 
+// 予約されている制御構文 | 複数文字記号 との比較 -> tokenを返す
+char *starts_with_reserved(char *p){
+   // 制御構文のキーワード
+   static char *kw[] = {"return", "if", "else", "while", "for"};
+
+   for(int i = 0; i < sizeof(kw) / sizeof(*kw); i++){
+     int len = strlen(kw[i]);
+     if(startswith(p, kw[i]) && !is_alnum(p[len]))
+      return kw[i];
+   }
+
+   // 複数文字記号
+   static char *ops[] = {"==", "!=", "<=", ">="};
+
+   for(int i = 0; i < sizeof(ops) / sizeof(*ops); i++)
+    if(startswith(p, ops[i]))
+      return ops[i];
+
+  return NULL;
+}
+
 // アルファベット | _
 bool is_alpha(char c) {
   return ('a' <= c && c <= 'z') || ('A' <= c && c <= 'Z') || c == '_';
@@ -89,29 +110,23 @@ Token *tokenize(char *p) {
       continue;
     }
 
-    // returnトークン                変数名かどうか判断する EX: return x
-    if (startswith(p, "return") && !is_alnum(p[6])) {
-      cur = new_token(TK_RETURN, cur, p, 6);
-      p += 6;
-      continue;
-    }
-
-    // 複数記号トークン
-    if(startswith(p, "==") || startswith(p, "!=") ||
-       startswith(p, "<=") || startswith(p, ">=")){
-      cur = new_token(TK_RESERVED, cur, p, 2);
-      p += 2; // 2文字送る
+    // 制御構文のキーワード | 複数記号トークンであレバ
+    char *kw = starts_with_reserved(p);
+    if(kw){
+      int len = strlen(kw);
+      cur = new_token(TK_RESERVED, cur, p, len);
+      p += len;
       continue;
     }
 
     // 単数記号トークン
-    if(strchr("+-*/()<>=;", *p)){
+    if(strchr("+-*/()<>=;{}", *p)){
       cur = new_token(TK_RESERVED, cur, p++, 1);
       continue;
     }
 
     // 変数
-    if (is_alpha(*p)) {
+    if(is_alpha(*p)){
       // 変数の場合には変数が終わるまで文字を送る
       char *q = p++;
       while (is_alnum(*p))

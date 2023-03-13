@@ -25,6 +25,9 @@ Token *new_token(TokenKind kind, Token *cur, char *str, int len);
 // 複数文字トークンの比較
 bool startswith(char *p, char *q);
 
+// 予約されている制御構文との比較 -> tokenを返す
+char *starts_with_reserved(char *p);
+
 // アルファベット | _
 bool is_alpha(char c);
 // 数字 | アルファベット | _

@@ -1,5 +1,7 @@
 #include "codeGen.h"
 
+int labelseq = 0;
+
 // 左辺が変数の場合
 // それ以外は無効な式 EX: 1 = 2
 void gen_lval(Node *node) {
@@ -35,6 +37,10 @@ void gen(Node *node) {
       printf(" mov x0, %d\n", node->val);
       printf(" str x0, [sp, -16]! \n"); // 16バイトずつ
       return;
+    case ND_EXPR_STMT:
+      gen(node->lhs);
+      //printf(" add sp, sp, 16\n");
+      return;
     case ND_LVAR:
       gen_lval(node);
       load();
@@ -44,10 +50,67 @@ void gen(Node *node) {
       gen(node->rhs);
       store();
       return;
+    case ND_IF: {
+      // 関数名をラベリングする
+      // 呼び出しの度に違う名前になる
+      int seq = labelseq++;
+      if(node->els){
+        gen(node->cond);
+        printf(" ldr x0, [sp], 16\n");
+        printf(" cmp x0, 0\n"); // falseと比較
+        printf(" b.eq .Lelse%d\n", seq); // 等しい場合
+        gen(node->then); // trueならここを通ってendへ飛ぶ
+        printf(" b .Lend%d\n", seq);
+        printf(".Lelse%d:\n", seq); // falseならelseへ飛ぶ
+        gen(node->els);
+        printf(".Lend%d:\n", seq);
+      }else{
+        gen(node->cond); // 条件式
+        printf(" ldr x0, [sp], 16\n");
+        printf(" cmp x0, 0\n");
+        printf(" b.eq .Lend%d\n", seq);
+        gen(node->then);
+        printf(".Lend%d:\n", seq);
+      }
+      return;
+    }
+    case ND_WHILE: {
+      int seq = labelseq++;
+      printf(".Lbegin%d:\n", seq);
+      gen(node->cond); // 条件式
+      printf(" ldr x0, [sp], 16\n");
+      printf(" cmp x0, 0\n");
+      printf(" b.eq .Lend%d\n", seq); // falseならendに飛ぶ
+      gen(node->then);
+      printf(" b .Lbegin%d\n", seq); // 最初に戻る
+      printf(".Lend%d:\n", seq);
+      return;
+    }
+    case ND_FOR: {
+      int seq = labelseq++;
+      if(node->init) gen(node->init);
+      printf(".Lbegin%d:\n", seq);
+      if(node->cond){
+        gen(node->cond); // 条件式
+        printf(" ldr x0, [sp], 16\n");
+        printf(" cmp x0, 0\n");
+        printf(" b.eq .Lend%d\n", seq); // falseならLendへ
+      }
+      gen(node->then); // for文の中を実行
+      if(node->inc) gen(node->inc); // 加算式を実行
+      printf(" b .Lbegin%d\n", seq);
+      printf(".Lend%d:\n", seq);
+      return;
+    }
+    // {...} block
+    case ND_BLOCK:
+      // 連結リスト内を全て実行する。
+      for (Node *n = node->next; n; n = n->next)
+        gen(n);
+      return;
     case ND_RETURN: // returnが出てきたらそこで終了
       gen(node->lhs); // 左辺をgenして返り値を求める
-      printf(" B .Lreturn\n");
-      printf(" ret\n"); // ret命令は何個あってもいい
+      printf(" b .Lreturn\n"); // returnへジャンプ
       return;
   }
 
