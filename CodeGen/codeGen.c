@@ -109,8 +109,17 @@ void gen(Node *node) {
         gen(n);
       return;
     case ND_FUNCALL:
-      //printf(" bl %s\n", node->funcname);
+      printf(" str lr, [sp, -16]!\n");
+      // 呼び出し自体は成功している
       printf(" bl %s\n", node->funcname);
+      printf(" ldr lr, [sp], 16\n");
+      //printf(" ldr x0, [sp]\n");
+      // ここでx0がおかしい？
+      // w0やr0を試したけどダメだった。
+      // printf(" mov x0, 30\n"); 30が返ると思ったけど違う？
+      // 関数から返って来れないのでは？
+      // testでreturn 1をやっても実行できなかったので、恐らくはそうなっている
+      // 返ってくる時にメモリ外アクセスしてしまう？
       printf(" str x0, [sp, -16]!\n");
       return;
     case ND_RETURN: // returnが出てきたらそこで終了
@@ -166,7 +175,10 @@ void gen(Node *node) {
 
 void code_gen(){
   // アセンブリの前半部分を出力
-  printf(".globl main\n");
+  printf(".globl main, foa\n");
+  printf("foa:\n");
+  printf(" mov x0, 1\n");
+  printf(" ret\n");
   printf("main:\n");
 
   // Prologue
