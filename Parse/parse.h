@@ -19,5 +19,6 @@ Node *equality();
 Node *relational();
 Node *add();
 Node *mul();
+Node *func_args();
 Node *primary();
 Node *unary();

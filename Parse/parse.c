@@ -204,6 +204,24 @@ Node *unary() {
   return primary();
 }
 
+// func-args = "(" ( assingn ("," assign)*)? ")"
+Node *func_args(){
+  if(consume(")")) // 引数なし
+    return NULL;
+  
+  // 連結リストで変数を管理する
+  Node *head = assign(); // 引数(変数)
+  Node *cur = head;
+
+  // "," が続く限り引数がある
+  while(consume(",")){
+    cur->next = assign();
+    cur = cur->next;
+  }
+  expect(")");
+  return head;
+}
+
 // primary = num 
 //         | "(" expr ")"
 //         | ident ( "(" ")"" )? => function without args
@@ -220,9 +238,9 @@ Node *primary() {
   if(tok){
     // function
     if(consume("(")){
-      expect(")");
       Node *node = new_node(ND_FUNCALL);
       node->funcname = strndup(tok->str, tok->len);
+      node->args = func_args(); // 引数
       return node;
     }
     // variable

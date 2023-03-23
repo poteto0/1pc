@@ -1,7 +1,5 @@
 #include "codeGen.h"
 
-int labelseq = 0;
-
 // 左辺が変数の場合
 // それ以外は無効な式 EX: 1 = 2
 void gen_lval(Node *node) {
@@ -108,20 +106,31 @@ void gen(Node *node) {
       for (Node *n = node->next; n; n = n->next)
         gen(n);
       return;
-    case ND_FUNCALL:
+    case ND_FUNCALL: { // こうしないと宣言と定義を別々にしないといけなくなる
+      int nargs = 0; // 引数の数
+      for(Node *arg = node->args; arg; arg = arg->next){
+        gen(arg);
+        nargs++;
+      }
+      for(int i=nargs-1; i>=0; i--){
+        // 4つ以内であれば引数を変数で管理する
+        if(i <= 8){
+          printf(" ldr %s, [sp], 16\n", argreg[i]);
+        }
+        // TODO: 9つ以上はスタックにpushして管理する
+        else{
+          printf(" ldr x3, [sp], 16\n");
+          printf(" str x3, [sp]\n");
+        }
+      }
+      // 元のメモリアドレスを格納し、関数から戻ってくる
       printf(" str lr, [sp, -16]!\n");
-      // 呼び出し自体は成功している
+      // 関数呼び出し
       printf(" bl %s\n", node->funcname);
       printf(" ldr lr, [sp], 16\n");
-      //printf(" ldr x0, [sp]\n");
-      // ここでx0がおかしい？
-      // w0やr0を試したけどダメだった。
-      // printf(" mov x0, 30\n"); 30が返ると思ったけど違う？
-      // 関数から返って来れないのでは？
-      // testでreturn 1をやっても実行できなかったので、恐らくはそうなっている
-      // 返ってくる時にメモリ外アクセスしてしまう？
       printf(" str x0, [sp, -16]!\n");
       return;
+    }
     case ND_RETURN: // returnが出てきたらそこで終了
       gen(node->lhs); // 左辺をgenして返り値を求める
       printf(" ldr x0, [sp], 16\n");
@@ -175,12 +184,9 @@ void gen(Node *node) {
 
 void code_gen(){
   // アセンブリの前半部分を出力
-  printf(".globl main, foa\n");
-  printf("foa:\n");
-  printf(" mov x0, 1\n");
-  printf(" ret\n");
-  printf("main:\n");
+  printf(".globl main\n");
 
+  printf("main:\n");
   // Prologue
   printf(" mov x29, sp\n");
   printf(" sub sp, sp, 416\n");

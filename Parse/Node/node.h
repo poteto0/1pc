@@ -47,6 +47,7 @@ struct Node {
 
   // function call
   char *funcname;
+  Node *args; // 引数
 };
 
 #endif
