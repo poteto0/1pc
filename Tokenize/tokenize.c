@@ -2,7 +2,7 @@
 
 // 次のトークンが期待している記号のときには、トークンを1つ読み進めて
 // 真を返す。それ以外の場合には偽を返す。
-bool consume(char* op){
+bool consume(char* op) {
   if(token->kind != TK_RESERVED ||
      strlen(op) != token->len || // 文字数チェック
      memcmp(token->str, op, token->len) // 先頭から文字数分チェックする(==0 でtrue)
@@ -12,16 +12,8 @@ bool consume(char* op){
   return true;
 }
 
-
-char *strndup(char *p, int len) {
-  char *buf = malloc(len + 1);
-  strncpy(buf, p, len);
-  buf[len] = '\0';
-  return buf;
-}
-
 // consumeの文字ver
-Token *consume_ident(){
+Token *consume_ident() {
   if (token->kind != TK_IDENT)
     return NULL;
   Token *t = token;
@@ -40,11 +32,6 @@ void expect(char* op) {
   token = token->next;
 }
 
-// 終端トークンかどうか
-bool at_eof() {
-  return token->kind == TK_EOF;
-}
-
 // 次のトークンが数値の場合、トークンを1つ読み進めてその数値を返す。
 // それ以外の場合にはエラーを報告する。
 int expect_number() {
@@ -57,6 +44,27 @@ int expect_number() {
   }
 }
 
+// 終端トークンかどうか
+bool at_eof() {
+  return token->kind == TK_EOF;
+}
+
+// 識別子トークンかどうかを確かめ、識別子の名前を返す
+char *expect_ident() {
+  if(token->kind != TK_IDENT)
+    error_at(user_input, token->str, "識別子ではありません");
+  char *s = strndup(token->str, token->len); // 文字数分
+  token = token->next;
+  return s;
+}
+
+char *strndup(char *p, int len) {
+  char *buf = malloc(len + 1);
+  strncpy(buf, p, len);
+  buf[len] = '\0';
+  return buf;
+}
+
 // 新しいトークンを作成してcurに繋げる
 Token *new_token(TokenKind kind, Token *cur, char *str, int len) {
   Token *tok = calloc(1, sizeof(Token)); // メモリの確保
@@ -65,11 +73,6 @@ Token *new_token(TokenKind kind, Token *cur, char *str, int len) {
   tok->len  = len;
   cur->next = tok;
   return tok;
-}
-
-// 複数文字トークンの比較 → 2文字分比較したいからここで定義
-bool startswith(char *p, char *q) {
-  return memcmp(p, q, strlen(q)) == 0;
 }
 
 // 予約されている制御構文 | 複数文字記号 との比較 -> tokenを返す
@@ -93,14 +96,19 @@ char *starts_with_reserved(char *p){
   return NULL;
 }
 
-// アルファベット | _
-bool is_alpha(char c) {
-  return ('a' <= c && c <= 'z') || ('A' <= c && c <= 'Z') || c == '_';
+// 複数文字トークンの比較 → 2文字分比較したいからここで定義
+bool startswith(char *p, char *q) {
+  return memcmp(p, q, strlen(q)) == 0;
 }
 
 // 数字 | アルファベット | _
 bool is_alnum(char c) {
   return is_alpha(c) || ('0' <= c && c <= '9');
+}
+
+// アルファベット | _
+bool is_alpha(char c) {
+  return ('a' <= c && c <= 'z') || ('A' <= c && c <= 'Z') || c == '_';
 }
 
 // 入力文字列pをトークナイズしてそれを返す

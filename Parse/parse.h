@@ -1,9 +1,7 @@
 #include "Node/node.h"
 #include "LVar/lvarHelper.c"
+#include "../Function/Function.h"
 #include "../Tokenize/tokenize.c"
-
-// セミコロン区切りで複数の式をかけるようにしたので、パースの結果として複数のノードを保存しておく
-Node *code[100];
 
 // ノードの作成
 Node *new_node(NodeKind kind);
@@ -12,6 +10,9 @@ Node *new_unary_node(NodeKind kind, Node *expr); // 左辺のみ
 Node *new_num_node(int val);
 Node *new_lvar_node(LVar *lvar); // 新しい変数を作る
 
+Function *program();
+
+Function *function();
 Node *stmt();
 Node *expr();
 Node *assign();

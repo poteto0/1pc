@@ -34,13 +34,42 @@ Node *new_lvar_node(LVar *lvar){
   return node;
 }
 
-// program = stmt*
-Node *program() {
+// program = function*
+Function *program() {
+  Function head;
+  head.next = NULL;
+  Function *cur = &head;
+
+  while (!at_eof()){
+    cur->next = function();
+    cur = cur->next;
+  }
+  return head.next;
+}
+
+// function = ident "(" ")" "{" stmt* "}"
+Function *function() {
   locals = NULL;
-  int i = 0;
-  while (!at_eof())
-    code[i++] = stmt(); // 各行を保存する
-  code[i] = NULL;
+
+  char *name = expect_ident(); // 関数名
+  expect("(");
+  expect(")");
+  expect("{");
+
+  Node head;
+  head.next = NULL;
+  Node *cur = &head;
+
+  while(!consume("}")) {
+    cur->next = stmt();
+    cur = cur->next;
+  }
+
+  Function *fn = calloc(1, sizeof(Function));
+  fn->name = name;
+  fn->node = head.next;
+  fn->locals = locals;
+  return fn;
 }
 
 // プログラム1行単位

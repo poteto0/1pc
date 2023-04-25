@@ -18,6 +18,7 @@ char *strndup(char *p, int len);
 void expect(char* op);
 
 int expect_number();
+char *expect_ident();
 
 bool at_eof();
 
